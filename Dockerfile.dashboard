@@ -1,0 +1,33 @@
+# Stage 1: Build the React frontend
+FROM node:20-slim AS frontend-builder
+
+WORKDIR /frontend
+
+COPY dashboard/frontend/package.json ./
+RUN npm install
+
+COPY dashboard/frontend/ ./
+RUN npm run build
+
+
+# Stage 2: Python API server + serve static files
+FROM python:3.13-slim AS server
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY dashboard/backend/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY dashboard/backend/main.py ./main.py
+
+# Copy the built React app from Stage 1
+COPY --from=frontend-builder /frontend/dist /app/static
+
+ENV PYTHONUNBUFFERED=1
+
+EXPOSE 4000
+
+CMD ["python", "main.py"]

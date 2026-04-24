@@ -1,0 +1,2 @@
+dbos[otel]>=2.19.0
+fastapi[standard]>=0.136.1
